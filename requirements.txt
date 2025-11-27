@@ -2,3 +2,5 @@ shiny
 numpy
 pandas
 matplotlib
+faicons
+seaborn
