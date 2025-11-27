@@ -1,8 +1,8 @@
 from shiny import App, render, ui, reactive
 import pandas as pd
 import faicons as fa
-import seaborn as sns 
-import matplotlib.pyplot as plt 
+import plotly.express as px  # NEW: For interactive plots
+from shinywidgets import output_widget, render_widget  # NEW: To display Plotly
 from pathlib import Path
 
 # 1. LOAD THE DATA
@@ -23,14 +23,6 @@ def get_choices(col):
 
 # --- PART A: DEFINE THE "ABOUT" PAGE CONTENT ---
 about_page_content = ui.div(
-    ui.br(),
-    # Back Button
-    ui.input_action_button(
-        "btn_home", 
-        "Back to Dashboard", 
-        icon=fa.icon_svg("arrow-left"), 
-        class_="btn-primary"
-    ),
     ui.br(), ui.br(),
 
     # 1. Research Authors Section
@@ -144,8 +136,8 @@ dashboard_page_content = ui.layout_sidebar(
         ui.value_box("Total Headcount", ui.output_text("kpi_headcount"), showcase=fa.icon_svg("users"), theme="primary"),
         ui.value_box("Attrition Rate", ui.output_text("kpi_attrition"), showcase=fa.icon_svg("user-minus"), theme="danger"),
         ui.value_box("Avg Engagement", ui.output_text("kpi_engagement"), showcase=fa.icon_svg("chart-line"), theme="bg-gradient-blue-purple"),
-        ui.value_box("Avg Satisfaction", ui.output_text("kpi_satisfaction"), showcase=fa.icon_svg("face-smile"), theme="teal"),
-        ui.value_box("High Performers", ui.output_text("kpi_performance"), showcase=fa.icon_svg("star"), theme="warning"),
+        ui.value_box("Avg Satisfaction", ui.output_text("kpi_satisfaction"), showcase=fa.icon_svg("face-smile", style="solid", fill="white", height="1em"), theme="teal"),
+        ui.value_box("High Performers", ui.output_text("kpi_performance"), showcase=fa.icon_svg("star", style="solid", fill="white", height="1em"), theme="warning"),
     ),
     
     ui.br(),
@@ -154,23 +146,23 @@ dashboard_page_content = ui.layout_sidebar(
         ui.nav_panel(
             "Retention & Attrition Analysis",
             ui.layout_columns(
-                ui.card(ui.card_header("Attrition by Department"), ui.output_plot("plot_attrition_dept")),
-                ui.card(ui.card_header("Top Reasons for Termination"), ui.output_plot("plot_term_reasons")),
+                ui.card(ui.card_header("Attrition by Department"), output_widget("plot_attrition_dept")),
+                ui.card(ui.card_header("Top Reasons for Termination"), output_widget("plot_term_reasons")),
             ),
             ui.layout_columns(
-                ui.card(ui.card_header("Attrition by Tenure (Days Employed)"), ui.output_plot("plot_tenure")),
-                ui.card(ui.card_header("Recruitment Source vs. Retention"), ui.output_plot("plot_recruitment")),
+                ui.card(ui.card_header("Attrition by Tenure (Days Employed)"), output_widget("plot_tenure")),
+                ui.card(ui.card_header("Recruitment Source vs. Retention"), output_widget("plot_recruitment")),
             ),
         ),
         ui.nav_panel(
             "Performance & Engagement",
             ui.layout_columns(
-                ui.card(ui.card_header("Performance Score Distribution"), ui.output_plot("plot_perf_dist")),
-                ui.card(ui.card_header("Engagement vs. Satisfaction (Retention Risk Matrix)"), ui.output_plot("plot_prod_sat_matrix")),
+                ui.card(ui.card_header("Performance Score Distribution"), output_widget("plot_perf_dist")),
+                ui.card(ui.card_header("Engagement vs. Satisfaction (Retention Risk Matrix)"), output_widget("plot_prod_sat_matrix")),
             ),
             ui.layout_columns(
-                ui.card(ui.card_header("Impact of Absences & Lateness on Performance"), ui.output_plot("plot_attendance_perf")),
-                ui.card(ui.card_header("Manager Effectiveness (Performance vs. Satisfaction)"), ui.output_plot("plot_manager_effect")),
+                ui.card(ui.card_header("Impact of Absences & Lateness on Performance"), output_widget("plot_attendance_perf")),
+                ui.card(ui.card_header("Manager Effectiveness (Performance vs. Satisfaction)"), output_widget("plot_manager_effect")),
             ),
         ),
     ),
@@ -178,6 +170,17 @@ dashboard_page_content = ui.layout_sidebar(
 
 # 2. DEFINE THE UI (Combining Part A and Part B)
 app_ui = ui.page_fluid(
+    # Add custom CSS to make specific icons white
+    ui.tags.style("""
+        .bslib-value-box[data-color='teal'] .bi,
+        .bslib-value-box[data-color='warning'] .bi,
+        .bslib-value-box[data-color='teal'] svg,
+        .bslib-value-box[data-color='warning'] svg {
+            fill: white !important;
+            color: white !important;
+        }
+    """),
+    
     # Header Row with Title and About Button
     ui.row(
         ui.column(10, ui.h2("HR Employee Productivity & Retention Dashboard")),
@@ -201,16 +204,23 @@ app_ui = ui.page_fluid(
 # 3. DEFINE THE SERVER LOGIC
 def server(input, output, session):
 
-    # --- PAGE NAVIGATION LOGIC ---
+    # --- PAGE NAVIGATION LOGIC (TOGGLE) ---
+    # We store the current page state.
+    current_page = reactive.Value("dashboard_view")
+
     @reactive.Effect
     @reactive.event(input.btn_about)
     def _():
-        ui.update_navs("page_nav", selected="about_view")
-
-    @reactive.Effect
-    @reactive.event(input.btn_home)
-    def _():
-        ui.update_navs("page_nav", selected="dashboard_view")
+        if current_page.get() == "dashboard_view":
+            # Switch to About
+            ui.update_navs("page_nav", selected="about_view")
+            ui.update_action_button("btn_about", label="Back to Dashboard", icon=fa.icon_svg("arrow-left"))
+            current_page.set("about_view")
+        else:
+            # Switch back to Dashboard
+            ui.update_navs("page_nav", selected="dashboard_view")
+            ui.update_action_button("btn_about", label="About", icon=fa.icon_svg("circle-info"))
+            current_page.set("dashboard_view")
 
     # --- RESET BUTTON LOGIC ---
     @reactive.Effect
@@ -287,7 +297,9 @@ def server(input, output, session):
         return f"{high / total:.1%}"
 
     # --- VISUALIZATIONS ---
-    @render.plot
+    # --- INTERACTIVE VISUALIZATIONS (PLOTLY) ---
+
+    @render_widget
     def plot_attrition_dept():
         dff = filtered_df()
         if dff.empty:
@@ -296,13 +308,24 @@ def server(input, output, session):
         if term_df.empty:
             return
         
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.countplot(data=term_df, y='Department', hue='Department', palette='Reds_r', ax=ax, order=term_df['Department'].value_counts().index)
-        ax.set_title("Which Departments are losing the most people?")
+        # Prepare data counts
+        counts = term_df['Department'].value_counts().reset_index()
+        counts.columns = ['Department', 'Count']
         
+        # Create interactive bar chart
+        fig = px.bar(
+            counts, 
+            x="Count", 
+            y="Department", 
+            orientation='h',
+            color="Count",
+            color_continuous_scale="Reds",
+            title="Which Departments are losing the most people?"
+        )
+        fig.update_layout(showlegend=False)
         return fig
 
-    @render.plot
+    @render_widget
     def plot_term_reasons():
         dff = filtered_df()
         if dff.empty:
@@ -311,12 +334,22 @@ def server(input, output, session):
         if term_df.empty:
             return
         
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.countplot(data=term_df, y='TermReason', hue='TermReason', palette='magma', ax=ax, order=term_df['TermReason'].value_counts().iloc[:10].index)
-        ax.set_title("Why are people leaving?")
+        counts = term_df['TermReason'].value_counts().head(10).reset_index()
+        counts.columns = ['Reason', 'Count']
+        
+        fig = px.bar(
+            counts, 
+            x="Count", 
+            y="Reason", 
+            orientation='h',
+            color="Count",
+            color_continuous_scale="Magma",
+            title="Why are people leaving?"
+        )
+        fig.update_layout(showlegend=False)
         return fig
 
-    @render.plot
+    @render_widget
     def plot_tenure():
         dff = filtered_df()
         if dff.empty:
@@ -324,86 +357,122 @@ def server(input, output, session):
         term_df = dff[dff['Termd'] == 1].copy()
         if term_df.empty:
             return
-        
         term_df['TenureDays'] = (term_df['DateofTermination'] - term_df['DateofHire']).dt.days
         
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.histplot(data=term_df, x='TenureDays', bins=20, color='skyblue', ax=ax, kde=True)
-        ax.set_title("Time until Termination (Days)")
+        fig = px.histogram(
+            term_df, 
+            x="TenureDays", 
+            nbins=20,
+            title="Time until Termination (Days)",
+            color_discrete_sequence=['skyblue']
+        )
+        fig.update_layout(bargap=0.1, showlegend=False)
         return fig
 
-    @render.plot
+    @render_widget
     def plot_recruitment():
         dff = filtered_df()
         if dff.empty:
             return
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.countplot(data=dff, y='RecruitmentSource', hue='EmploymentStatus', ax=ax, palette='viridis')
-        ax.set_title("Hiring Source Effectiveness")
+        
+        # Group data for stacked bar
+        df_grp = dff.groupby(['RecruitmentSource', 'EmploymentStatus']).size().reset_index(name='Count')
+        
+        fig = px.bar(
+            df_grp, 
+            x="Count", 
+            y="RecruitmentSource", 
+            color="EmploymentStatus",
+            orientation='h',
+            title="Hiring Source Effectiveness",
+            color_discrete_sequence=px.colors.qualitative.Plotly
+        )
         return fig
 
-    
-    @render.plot
+    @render_widget
     def plot_perf_dist():
         dff = filtered_df()
         if dff.empty:
             return
-        perf_counts = dff['PerformanceScore'].value_counts()
         
-        fig, ax = plt.subplots(figsize=(8, 6))
-        ax.pie(perf_counts, labels=perf_counts.index, autopct='%1.1f%%', startangle=90, wedgeprops={'width': 0.4})
-        ax.set_title("Workforce Performance Distribution")
+        counts = dff['PerformanceScore'].value_counts().reset_index()
+        counts.columns = ['Score', 'Count']
+        
+        fig = px.pie(
+            counts, 
+            values='Count', 
+            names='Score', 
+            hole=0.4,
+            title="Workforce Performance Distribution"
+        )
         return fig
 
-    @render.plot
+    @render_widget
     def plot_prod_sat_matrix():
         dff = filtered_df()
         if dff.empty:
             return
-       
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.scatterplot(data=dff, x='EmpSatisfaction', y='EngagementSurvey', hue='PerformanceScore', style='PerformanceScore', s=100, palette='deep', ax=ax)
         
-        ax.axhline(dff['EngagementSurvey'].mean(), color='gray', linestyle='--', alpha=0.5)
-        ax.axvline(dff['EmpSatisfaction'].mean(), color='gray', linestyle='--', alpha=0.5)
-       
-        ax.set_title("Productivity vs. Satisfaction Matrix")
-        
+        fig = px.scatter(
+            dff, 
+            x="EmpSatisfaction", 
+            y="EngagementSurvey", 
+            color="PerformanceScore", 
+            symbol="PerformanceScore",
+            hover_data=["Employee_Name", "Position"],
+            title="Productivity vs. Satisfaction Matrix"
+        )
+        # Add quadrant lines
+        fig.add_hline(y=dff['EngagementSurvey'].mean(), line_dash="dash", line_color="gray")
+        fig.add_vline(x=dff['EmpSatisfaction'].mean(), line_dash="dash", line_color="gray")
         return fig
 
-    @render.plot
+    @render_widget
     def plot_attendance_perf():
         dff = filtered_df()
         if dff.empty:
             return
-       
+        
         att_df = dff.groupby('PerformanceScore')[['Absences', 'DaysLateLast30']].mean().reset_index()
         att_melted = att_df.melt(id_vars='PerformanceScore', var_name='Metric', value_name='Average Days')
         
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.barplot(data=att_melted, x='PerformanceScore', y='Average Days', hue='Metric', palette='muted', ax=ax)
-        ax.set_title("Do Absences Impact Performance?")
+        fig = px.bar(
+            att_melted, 
+            x="PerformanceScore", 
+            y="Average Days", 
+            color="Metric", 
+            barmode="group",
+            title="Do Absences Impact Performance?"
+        )
         return fig
 
-    @render.plot
+    @render_widget
     def plot_manager_effect():
         dff = filtered_df()
         if dff.empty:
             return
-       
+        
         mgr_df = dff.copy()
         score_map = {'Exceeds': 4, 'Fully Meets': 3, 'Needs Improvement': 2, 'PIP': 1}
         mgr_df['PerfScoreNum'] = mgr_df['PerformanceScore'].map(score_map)
-       
+        
         mgr_stats = mgr_df.groupby('ManagerName')[['PerfScoreNum', 'EmpSatisfaction']].mean().reset_index()
         mgr_stats = mgr_stats.sort_values('PerfScoreNum', ascending=False)
-       
+        
+        # Melt for side-by-side bars
         mgr_melted = mgr_stats.melt(id_vars='ManagerName', var_name='Metric', value_name='Score')
         mgr_melted['Metric'] = mgr_melted['Metric'].replace({'PerfScoreNum': 'Avg Performance', 'EmpSatisfaction': 'Avg Satisfaction'})
-        
-        fig, ax = plt.subplots(figsize=(10, 8))
-        sns.barplot(data=mgr_melted, y='ManagerName', x='Score', hue='Metric', palette='coolwarm', ax=ax)
-        ax.set_title("Manager Effectiveness")
+
+        fig = px.bar(
+            mgr_melted, 
+            y="ManagerName", 
+            x="Score", 
+            color="Metric", 
+            barmode="group",
+            orientation='h',
+            height=600,
+            title="Manager Effectiveness"
+        )
         return fig
 
 # IMPORTANT: Mount the 'www' folder as static assets so the images load.
