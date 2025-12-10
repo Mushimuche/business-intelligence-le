@@ -60,6 +60,7 @@ about_page_content = ui.div(
                     ui.p("University of Southeastern Philippines", class_="text-center small mb-1"),
                     ui.p("College of Information and Computing", class_="text-center small mb-1"),
                     ui.p("BS Computer Science - Major in Data Science", class_="text-center small mb-1"),
+                    ui.p("CSDS 313 Business Intelligence [AY 2025-2026]", class_="text-center small mb-1"),
                     class_="p-3"
                 ),
             )
@@ -82,6 +83,7 @@ about_page_content = ui.div(
                     ui.p("University of Southeastern Philippines", class_="text-center small mb-1"),
                     ui.p("College of Information and Computing", class_="text-center small mb-1"),
                     ui.p("BS Computer Science - Major in Data Science", class_="text-center small mb-1"),
+                    ui.p("CSDS 313 Business Intelligence [AY 2025-2026]", class_="text-center small mb-1"),
                     class_="p-3"
                 ),
             )
@@ -104,6 +106,7 @@ about_page_content = ui.div(
                     ui.p("University of Southeastern Philippines", class_="text-center small mb-1"),
                     ui.p("College of Information and Computing", class_="text-center small mb-1"),
                     ui.p("BS Computer Science - Major in Data Science", class_="text-center small mb-1"),
+                    ui.p("CSDS 313 Business Intelligence [AY 2025-2026]", class_="text-center small mb-1"),
                     class_="p-3"
                 ),
             )
@@ -134,7 +137,6 @@ dashboard_page_content = ui.layout_sidebar(
         ui.input_selectize("marital_filter", "Marital Status", choices=get_choices("MaritalDesc"), multiple=True, options={"placeholder": "All Statuses"}),
         ui.hr(),
         ui.input_radio_buttons("sex_filter", "Gender", choices=["All"] + get_choices("Sex"), selected="All"),
-        ui.hr(),
         ui.input_action_button("reset_filters", "Reset Filters", style="background-color: #AF1763; color: white; border: none; font-weight: 600;", width="100%"),
     ),
     
@@ -403,18 +405,26 @@ def server(input, output, session):
         
         term_df['TenureDays'] = (term_df['DateofTermination'] - term_df['DateofHire']).dt.days
         
-        # Create Bins (Years)
-        bins = [0, 365, 1095, 1825, 10000] # 0-1yr, 1-3yr, 3-5yr, 5+yr
-        labels = ['< 1 Year', '1-3 Years', '3-5 Years', '5+ Years']
-        term_df['TenureGroup'] = pd.cut(term_df['TenureDays'], bins=bins, labels=labels)
+        term_df['YearsInt'] = (term_df['TenureDays'] / 365).astype(int)
+        tenure_counts = term_df['YearsInt'].value_counts().reset_index()
+        tenure_counts.columns = ['YearsInt', 'Count']
         
-        tenure_counts = term_df['TenureGroup'].value_counts().reset_index()
-        tenure_counts.columns = ['Tenure Group', 'Count']
+        # Sort numerically so the x-axis is 0, 1, 2, 3...
+        tenure_counts = tenure_counts.sort_values('YearsInt')
+
+        # Create readable labels
+        def make_label(y):
+            if y < 1: return "< 1 Year"
+            elif y == 1: return "1 Year"
+            else: return f"{y} Years"
+    
+        tenure_counts['Label'] = tenure_counts['YearsInt'].apply(make_label)
         
         fig = px.bar(
-            tenure_counts, x="Tenure Group", y="Count",
-            color_discrete_sequence=[theme_colors[1]], 
-            category_orders={"Tenure Group": ['< 1 Year', '1-3 Years', '3-5 Years', '5+ Years']}
+            tenure_counts, x="Label", y="Count",
+            # Force Plotly to respect the numerical sort order
+            category_orders={"Label": tenure_counts['Label'].tolist()},
+            color_discrete_sequence=[theme_colors[1]]
         )
         
         fig.update_layout(
