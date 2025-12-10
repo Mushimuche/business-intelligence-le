@@ -44,8 +44,12 @@ about_page_content = ui.div(
     ui.row(
         ui.column(4,
             ui.card(
-                # Cyan
-                ui.card_header("Khinje Louis P. Curugan", style="background-color: #0DCAF0; color: white;", class_="text-center fs-5"),
+                # Cyan - CENTERED TEXT FIX
+                ui.card_header(
+                    ui.div("Khinje Louis P. Curugan", class_="w-100 text-center"), 
+                    style="background-color: #0DCAF0; color: white;", 
+                    class_="fs-5"
+                ),
                 ui.div(
                     ui.h6("BSCS Student", class_="text-center fw-bold"),
                     ui.div(
@@ -62,8 +66,12 @@ about_page_content = ui.div(
         ),
         ui.column(4,
             ui.card(
-                # Magenta (Primary)
-                ui.card_header("Rui Manuel A. Palabon", style="background-color: #AF1763; color: white;", class_="text-center fs-5"),
+                # Magenta (Primary) - CENTERED TEXT FIX
+                ui.card_header(
+                    ui.div("Rui Manuel A. Palabon", class_="w-100 text-center"),
+                    style="background-color: #AF1763; color: white;", 
+                    class_="fs-5"
+                ),
                 ui.div(
                     ui.h6("BSCS Student", class_="text-center fw-bold"),
                     ui.div(
@@ -80,8 +88,12 @@ about_page_content = ui.div(
         ),
         ui.column(4,
             ui.card(
-                # Blue
-                ui.card_header("Aj Ian L. Resurreccion", style="background-color: #0D6EFD; color: white;", class_="text-center fs-5"),
+                # Blue - CENTERED TEXT FIX
+                ui.card_header(
+                    ui.div("Aj Ian L. Resurreccion", class_="w-100 text-center"),
+                    style="background-color: #0D6EFD; color: white;", 
+                    class_="fs-5"
+                ),
                 ui.div(
                     ui.h6("BSCS Student", class_="text-center fw-bold"),
                     ui.div(
@@ -131,7 +143,6 @@ dashboard_page_content = ui.layout_sidebar(
         ui.value_box("Attrition Rate", ui.output_text("kpi_attrition"), showcase=fa.icon_svg("user-minus"), theme="brand-blue"),
         ui.value_box("Avg Engagement", ui.output_text("kpi_engagement"), showcase=fa.icon_svg("chart-line"), theme="brand-teal"),
         ui.value_box("Avg Satisfaction", ui.output_text("kpi_satisfaction"), showcase=fa.icon_svg("face-smile", style="solid", fill="white", height="1em"), theme="brand-cyan"),
-        # UPDATED: Star is now explicitly white
         ui.value_box("High Performers", ui.output_text("kpi_performance"), showcase=fa.icon_svg("star", style="solid", fill="white", height="1em"), theme="brand-dark-cyan"),
     ),
     
@@ -189,7 +200,6 @@ app_ui = ui.page_fluid(
 
         /* 2. LAYOUT & SPACING */
         body {
-            /* Use Bootstrap variable so it adapts to Dark Mode automatically */
             background-color: var(--bs-body-bg); 
             padding: 20px 30px !important; 
         }
@@ -197,6 +207,17 @@ app_ui = ui.page_fluid(
         .main-header-row {
             margin-top: 10px;
             margin-bottom: 25px; 
+        }
+        
+        /* --- STICKY SIDEBAR FIX --- */
+        /* This ensures the sidebar stays on screen when scrolling */
+        aside.sidebar {
+            position: sticky !important;
+            top: 15px; /* Stick 15px from the top of the window */
+            height: calc(100vh - 30px); /* Prevent it from being taller than the screen */
+            overflow-y: auto; /* Allow scrolling inside the sidebar if needed */
+            align-self: start;
+            z-index: 100;
         }
 
         /* 3. COMPONENT STYLING */
@@ -216,13 +237,10 @@ app_ui = ui.page_fluid(
         .bg-brand-purple { background-color: #AF1763 !important; color: white !important; }
         .bg-brand-blue { background-color: #0D6EFD !important; color: white !important; }
         .bg-brand-teal { background-color: #198754 !important; color: white !important; }
-        .bg-brand-cyan { background-color: #0DCAF0 !important; color: white !important; }
-        
-        /* Yellow Box: Text is dark, but we allow SVG fill override */
+        .bg-brand-cyan { background-color: #0DCAF0 !important; color: #191C24 !important; }
         .bg-brand-dark-cyan { background-color: #FFC107 !important; color: #191C24 !important; }
         
         .bslib-value-box svg {
-            /* UPDATED: Removed !important so inline styles (fill='white') work */
             fill: currentColor; 
         }
     """),
@@ -453,7 +471,6 @@ def server(input, output, session):
 
     @render_widget
     def plot_prod_sat_matrix():
-        # --- UPDATED TO VIOLIN PLOT ---
         dff = filtered_df()
         if dff.empty: return
         
@@ -464,8 +481,8 @@ def server(input, output, session):
             x="PerformanceScore", 
             y="EngagementSurvey", 
             color="PerformanceScore",
-            box=True,          # Adds internal box plot for stats (median, etc.)
-            points="all",      # Adds raw points so we see the actual data distribution
+            box=True,          
+            points="all",      
             hover_data=["Employee_Name", "ManagerName", "EmpSatisfaction"],
             category_orders={"PerformanceScore": perf_order},
             color_discrete_sequence=theme_colors

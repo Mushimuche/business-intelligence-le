@@ -3,10 +3,50 @@
 server_type = 'connect_cloud'
 server_url = 'https://connect.posit.cloud'
 client_version = '1.26.0'
-created_at = '2025-12-10T23:53:18+08:00'
+created_at = ''
 dismissed_at = ''
-type = 'unknown'
+type = 'python-shiny'
 configuration_name = 'hr_employee_bi_dashboard-QBEM'
+id = '019b08fb-51bb-983f-a31b-ff2e91600bd9'
+dashboard_url = 'https://connect.posit.cloud/ruipalabon/content/019b08fb-51bb-983f-a31b-ff2e91600bd9'
+direct_url = 'https://019b08fb-51bb-983f-a31b-ff2e91600bd9.share.connect.posit.cloud'
+logs_url = 'https://connect.posit.cloud/ruipalabon/content/019b08fb-51bb-983f-a31b-ff2e91600bd9/history'
+deployed_at = '2025-12-10T23:57:26+08:00'
+bundle_id = '019b08fb-51bf-a715-1625-ec7a58f5e8a1'
+files = [
+  '.posit/publish/deployments/deployment-QHDM.toml',
+  '.posit/publish/hr_employee_bi_dashboard-QBEM.toml',
+  'main.py',
+  'requirements.txt'
+]
+requirements = [
+  "shiny\r",
+  "numpy\r",
+  "pandas\r",
+  "matplotlib\r",
+  "faicons\r",
+  "seaborn\r",
+  "shinywidgets\r",
+  "plotly\r",
+  'pathlib'
+]
 
 [connect_cloud]
 account_name = 'ruipalabon'
+
+[configuration]
+product_type = 'connect_cloud'
+'$schema' = 'https://cdn.posit.co/publisher/schemas/posit-publishing-schema-v3.json'
+type = 'python-shiny'
+entrypoint = 'main.py'
+validate = true
+files = [
+  '/main.py',
+  '/requirements.txt',
+  '/.posit/publish/hr_employee_bi_dashboard-QBEM.toml',
+  '/.posit/publish/deployments/deployment-QHDM.toml'
+]
+title = 'hr_employee_bi_dashboard'
+
+[configuration.python]
+version = '3.11'
