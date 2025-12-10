@@ -10,11 +10,13 @@ from pathlib import Path
 
 # --- THEME CONFIGURATION ---
 theme_colors = [
-    "#6F42C1", # Purple (Primary)
-    "#007BFF", # Bright Blue
-    "#00CCCC", # Teal
+    "#AF1763", # Magenta (Primary)
+    "#0D6EFD", # Blue
+    "#198754", # Green
     "#0DCAF0", # Cyan
-    "#17A2B8"  # Dark Cyan
+    "#FFC107", # Yellow
+    "#AB2E3C", # Red
+    "#191C24"  # Dark/Black
 ]
 
 # 1. LOAD THE DATA
@@ -42,7 +44,8 @@ about_page_content = ui.div(
     ui.row(
         ui.column(4,
             ui.card(
-                ui.card_header("Khinje Louis P. Curugan", style="background-color: #17A2B8; color: white;", class_="text-center fs-5"),
+                # Cyan
+                ui.card_header("Khinje Louis P. Curugan", style="background-color: #0DCAF0; color: white;", class_="text-center fs-5"),
                 ui.div(
                     ui.h6("BSCS Student", class_="text-center fw-bold"),
                     ui.div(
@@ -59,7 +62,8 @@ about_page_content = ui.div(
         ),
         ui.column(4,
             ui.card(
-                ui.card_header("Rui Manuel A. Palabon", style="background-color: #6F42C1; color: white;", class_="text-center fs-5"),
+                # Magenta (Primary)
+                ui.card_header("Rui Manuel A. Palabon", style="background-color: #AF1763; color: white;", class_="text-center fs-5"),
                 ui.div(
                     ui.h6("BSCS Student", class_="text-center fw-bold"),
                     ui.div(
@@ -76,7 +80,8 @@ about_page_content = ui.div(
         ),
         ui.column(4,
             ui.card(
-                ui.card_header("Aj Ian L. Resurreccion", style="background-color: #007BFF; color: white;", class_="text-center fs-5"),
+                # Blue
+                ui.card_header("Aj Ian L. Resurreccion", style="background-color: #0D6EFD; color: white;", class_="text-center fs-5"),
                 ui.div(
                     ui.h6("BSCS Student", class_="text-center fw-bold"),
                     ui.div(
@@ -118,7 +123,7 @@ dashboard_page_content = ui.layout_sidebar(
         ui.hr(),
         ui.input_radio_buttons("sex_filter", "Gender", choices=["All"] + get_choices("Sex"), selected="All"),
         ui.hr(),
-        ui.input_action_button("reset_filters", "Reset Filters", style="background-color: #6F42C1; color: white; border: none; font-weight: 600;", width="100%"),
+        ui.input_action_button("reset_filters", "Reset Filters", style="background-color: #AF1763; color: white; border: none; font-weight: 600;", width="100%"),
     ),
     
     ui.layout_columns(
@@ -126,6 +131,7 @@ dashboard_page_content = ui.layout_sidebar(
         ui.value_box("Attrition Rate", ui.output_text("kpi_attrition"), showcase=fa.icon_svg("user-minus"), theme="brand-blue"),
         ui.value_box("Avg Engagement", ui.output_text("kpi_engagement"), showcase=fa.icon_svg("chart-line"), theme="brand-teal"),
         ui.value_box("Avg Satisfaction", ui.output_text("kpi_satisfaction"), showcase=fa.icon_svg("face-smile", style="solid", fill="white", height="1em"), theme="brand-cyan"),
+        # UPDATED: Star is now explicitly white
         ui.value_box("High Performers", ui.output_text("kpi_performance"), showcase=fa.icon_svg("star", style="solid", fill="white", height="1em"), theme="brand-dark-cyan"),
     ),
     
@@ -206,16 +212,18 @@ app_ui = ui.page_fluid(
             gap: 15px; 
         }
 
-        /* 4. THEME COLORS */
-        .bg-brand-purple { background-color: #6F42C1 !important; color: white !important; }
-        .bg-brand-blue { background-color: #007BFF !important; color: white !important; }
-        .bg-brand-teal { background-color: #00CCCC !important; color: white !important; }
+        /* 4. THEME COLORS - Mapped from Image */
+        .bg-brand-purple { background-color: #AF1763 !important; color: white !important; }
+        .bg-brand-blue { background-color: #0D6EFD !important; color: white !important; }
+        .bg-brand-teal { background-color: #198754 !important; color: white !important; }
         .bg-brand-cyan { background-color: #0DCAF0 !important; color: white !important; }
-        .bg-brand-dark-cyan { background-color: #17A2B8 !important; color: white !important; }
+        
+        /* Yellow Box: Text is dark, but we allow SVG fill override */
+        .bg-brand-dark-cyan { background-color: #FFC107 !important; color: #191C24 !important; }
         
         .bslib-value-box svg {
-            fill: white !important;
-            color: white !important;
+            /* UPDATED: Removed !important so inline styles (fill='white') work */
+            fill: currentColor; 
         }
     """),
     
@@ -445,29 +453,22 @@ def server(input, output, session):
 
     @render_widget
     def plot_prod_sat_matrix():
-        # --- NEW LOGIC: Box Plot with Jitter (Centered) ---
+        # --- UPDATED TO VIOLIN PLOT ---
         dff = filtered_df()
         if dff.empty: return
         
-        # Order the Performance Scores logically
         perf_order = ['PIP', 'Needs Improvement', 'Fully Meets', 'Exceeds']
         
-        fig = px.box(
+        fig = px.violin(
             dff, 
             x="PerformanceScore", 
             y="EngagementSurvey", 
             color="PerformanceScore",
-            points="all", 
+            box=True,          # Adds internal box plot for stats (median, etc.)
+            points="all",      # Adds raw points so we see the actual data distribution
             hover_data=["Employee_Name", "ManagerName", "EmpSatisfaction"],
             category_orders={"PerformanceScore": perf_order},
             color_discrete_sequence=theme_colors
-        )
-        
-        # --- VISUAL FIX: Center the dots and make them look cleaner ---
-        fig.update_traces(
-            jitter=0.5,              # Spread dots horizontally so they don't clump
-            pointpos=0,              # 0 = Center dots ON the box (instead of side)
-            marker=dict(size=5, opacity=0.6, line=dict(width=0.5, color='DarkSlateGrey')) # Better dot styling
         )
         
         fig.update_layout(
