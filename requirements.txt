@@ -5,3 +5,5 @@ matplotlib
 faicons
 seaborn
 shinywidgets
+plotly
+pathlib

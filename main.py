@@ -5,12 +5,10 @@ from shiny import App, render, ui, reactive
 import pandas as pd
 import faicons as fa
 import plotly.express as px
-import plotly.graph_objects as go
 from shinywidgets import output_widget, render_widget
 from pathlib import Path
 
 # --- THEME CONFIGURATION ---
-# Your extracted color palette
 theme_colors = [
     "#6F42C1", # Purple (Primary)
     "#007BFF", # Bright Blue
@@ -37,14 +35,13 @@ def get_choices(col):
 
 # --- PART A: DEFINE THE "ABOUT" PAGE CONTENT ---
 about_page_content = ui.div(
-    ui.br(), ui.br(),
+    ui.br(), 
 
     # 1. Research Authors Section
-    ui.h3(fa.icon_svg("users"), " Research Authors"),
+    ui.h3(fa.icon_svg("users"), " Research Authors", class_="mb-4"),
     ui.row(
         ui.column(4,
             ui.card(
-                # APPLIED THEME: Dark Cyan
                 ui.card_header("Khinje Louis P. Curugan", style="background-color: #17A2B8; color: white;", class_="text-center fs-5"),
                 ui.div(
                     ui.h6("BSCS Student", class_="text-center fw-bold"),
@@ -62,7 +59,6 @@ about_page_content = ui.div(
         ),
         ui.column(4,
             ui.card(
-                # APPLIED THEME: Purple
                 ui.card_header("Rui Manuel A. Palabon", style="background-color: #6F42C1; color: white;", class_="text-center fs-5"),
                 ui.div(
                     ui.h6("BSCS Student", class_="text-center fw-bold"),
@@ -80,7 +76,6 @@ about_page_content = ui.div(
         ),
         ui.column(4,
             ui.card(
-                # APPLIED THEME: Bright Blue
                 ui.card_header("Aj Ian L. Resurreccion", style="background-color: #007BFF; color: white;", class_="text-center fs-5"),
                 ui.div(
                     ui.h6("BSCS Student", class_="text-center fw-bold"),
@@ -101,7 +96,7 @@ about_page_content = ui.div(
     ui.hr(),
 
     # 2. Dataset Information Section
-    ui.h3(fa.icon_svg("database"), " About the Dataset"),
+    ui.h3(fa.icon_svg("database"), " About the Dataset", class_="mt-4 mb-3"),
     ui.card(
         ui.markdown("""
         **Dataset:** Human Resources Data Set (Version 14)  
@@ -116,18 +111,17 @@ about_page_content = ui.div(
 # --- PART B: DEFINE THE MAIN DASHBOARD CONTENT ---
 dashboard_page_content = ui.layout_sidebar(
     ui.sidebar(
-        ui.h4("Filters"),
+        ui.h4("Filters", class_="mb-3"),
         ui.input_selectize("dept_filter", "Department", choices=get_choices("Department"), multiple=True, options={"placeholder": "All Departments"}),
         ui.input_selectize("recruit_filter", "Recruitment Source", choices=get_choices("RecruitmentSource"), multiple=True, options={"placeholder": "All Sources"}),
         ui.input_selectize("marital_filter", "Marital Status", choices=get_choices("MaritalDesc"), multiple=True, options={"placeholder": "All Statuses"}),
         ui.hr(),
         ui.input_radio_buttons("sex_filter", "Gender", choices=["All"] + get_choices("Sex"), selected="All"),
         ui.hr(),
-        ui.input_action_button("reset_filters", "Reset Filters", style="background-color: #6F42C1; color: white; border: none;", width="100%"),
+        ui.input_action_button("reset_filters", "Reset Filters", style="background-color: #6F42C1; color: white; border: none; font-weight: 600;", width="100%"),
     ),
     
     ui.layout_columns(
-        # APPLIED THEME: Used custom CSS classes defined in app_ui
         ui.value_box("Total Headcount", ui.output_text("kpi_headcount"), showcase=fa.icon_svg("users"), theme="brand-purple"),
         ui.value_box("Attrition Rate", ui.output_text("kpi_attrition"), showcase=fa.icon_svg("user-minus"), theme="brand-blue"),
         ui.value_box("Avg Engagement", ui.output_text("kpi_engagement"), showcase=fa.icon_svg("chart-line"), theme="brand-teal"),
@@ -135,46 +129,90 @@ dashboard_page_content = ui.layout_sidebar(
         ui.value_box("High Performers", ui.output_text("kpi_performance"), showcase=fa.icon_svg("star", style="solid", fill="white", height="1em"), theme="brand-dark-cyan"),
     ),
     
-    ui.br(),
-
     ui.navset_card_tab(
         ui.nav_panel(
             "Retention & Attrition Analysis",
+            ui.br(),
             ui.layout_columns(
-                ui.card(ui.card_header("Attrition by Department"), output_widget("plot_attrition_dept")),
-                ui.card(ui.card_header("Top Reasons for Termination"), output_widget("plot_term_reasons")),
+                ui.card(ui.card_header("Attrition by Department"), output_widget("plot_attrition_dept"), full_screen=True),
+                ui.card(ui.card_header("Top Reasons for Termination"), output_widget("plot_term_reasons"), full_screen=True),
             ),
+            ui.br(),
             ui.layout_columns(
-                ui.card(ui.card_header("Attrition by Tenure (Days Employed)"), output_widget("plot_tenure")),
-                ui.card(ui.card_header("Recruitment Source vs. Retention"), output_widget("plot_recruitment")),
+                ui.card(ui.card_header("When do employees leave? (Tenure Groups)"), output_widget("plot_tenure"), full_screen=True),
+                ui.card(ui.card_header("Recruitment Source vs. Retention"), output_widget("plot_recruitment"), full_screen=True),
             ),
         ),
         ui.nav_panel(
             "Performance & Engagement",
+            ui.br(),
             ui.layout_columns(
-                ui.card(ui.card_header("Performance Score Distribution"), output_widget("plot_perf_dist")),
-                ui.card(ui.card_header("Engagement vs. Satisfaction (Retention Risk Matrix)"), output_widget("plot_prod_sat_matrix")),
+                ui.card(ui.card_header("Performance Score Distribution"), output_widget("plot_perf_dist"), full_screen=True),
+                ui.card(ui.card_header("Are High Performers Engaged?"), output_widget("plot_prod_sat_matrix"), full_screen=True),
             ),
+            ui.br(),
             ui.layout_columns(
-                ui.card(ui.card_header("Impact of Absences & Lateness on Performance"), output_widget("plot_attendance_perf")),
-                ui.card(ui.card_header("Manager Effectiveness (Performance vs. Satisfaction)"), output_widget("plot_manager_effect")),
+                ui.card(ui.card_header("Impact of Absences & Lateness on Performance"), output_widget("plot_attendance_perf"), full_screen=True),
+                ui.card(ui.card_header("Manager Effectiveness"), output_widget("plot_manager_effect"), full_screen=True),
             ),
         ),
     ),
 )
 
-# 2. DEFINE THE UI (Combining Part A and Part B)
+# 2. DEFINE THE UI
 app_ui = ui.page_fluid(
-    # Add custom CSS to register your new color codes
+    # --- LOAD GOOGLE FONTS ---
+    ui.head_content(
+        ui.tags.link(
+            href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Montserrat:wght@500;600;700&display=swap", 
+            rel="stylesheet"
+        )
+    ),
+
+    # --- CUSTOM CSS ---
     ui.tags.style("""
-        /* Custom Theme Classes */
+        /* 1. TYPOGRAPHY SETTINGS */
+        :root {
+            --bs-body-font-family: 'Lato', sans-serif;
+        }
+        
+        h1, h2, h3, h4, h5, h6, .card-header, .value-box-title {
+            font-family: 'Montserrat', sans-serif !important;
+            font-weight: 600;
+        }
+
+        /* 2. LAYOUT & SPACING */
+        body {
+            /* Use Bootstrap variable so it adapts to Dark Mode automatically */
+            background-color: var(--bs-body-bg); 
+            padding: 20px 30px !important; 
+        }
+
+        .main-header-row {
+            margin-top: 10px;
+            margin-bottom: 25px; 
+        }
+
+        /* 3. COMPONENT STYLING */
+        .card, .bslib-value-box {
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: none !important;
+        }
+        
+        .header-controls {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 15px; 
+        }
+
+        /* 4. THEME COLORS */
         .bg-brand-purple { background-color: #6F42C1 !important; color: white !important; }
         .bg-brand-blue { background-color: #007BFF !important; color: white !important; }
         .bg-brand-teal { background-color: #00CCCC !important; color: white !important; }
         .bg-brand-cyan { background-color: #0DCAF0 !important; color: white !important; }
         .bg-brand-dark-cyan { background-color: #17A2B8 !important; color: white !important; }
         
-        /* Ensure Icons in Value Boxes are White */
         .bslib-value-box svg {
             fill: white !important;
             color: white !important;
@@ -183,13 +221,16 @@ app_ui = ui.page_fluid(
     
     # Header Row
     ui.row(
-        ui.column(10, ui.h2("HR Employee Productivity & Retention Dashboard")),
-        ui.column(2, 
+        ui.column(8, ui.h2("HR Employee Productivity & Retention Dashboard")),
+        ui.column(4, 
+            # Flexbox container for Switch + Button
             ui.div(
-                ui.input_action_button("btn_about", "About", icon=fa.icon_svg("circle-info"), class_="btn-light"),
-                style="text-align: right; margin-top: 10px;"
+                ui.input_dark_mode(id="mode", mode="light"),
+                ui.input_action_button("btn_about", "About", icon=fa.icon_svg("circle-info"), class_="btn-light shadow-sm"),
+                class_="header-controls"
             )
-        )
+        ),
+        class_="main-header-row" 
     ),
     
     ui.navset_hidden(
@@ -224,7 +265,6 @@ def server(input, output, session):
         ui.update_selectize("dept_filter", selected=[])
         ui.update_selectize("recruit_filter", selected=[])
         ui.update_radio_buttons("sex_filter", selected="All")
-        # --- MODIFIED: Reset for Selectize ---
         ui.update_selectize("marital_filter", selected=[])
 
     # --- REACTIVE DATA FILTERING ---
@@ -243,7 +283,6 @@ def server(input, output, session):
         if input.sex_filter() != "All":
             res = res[res['Sex'] == input.sex_filter()]
         
-        # --- MODIFIED: Filter Logic for Selectize (Empty = All) ---
         if input.marital_filter():
             res = res[res['MaritalDesc'].isin(input.marital_filter())]
             
@@ -279,7 +318,7 @@ def server(input, output, session):
         high = dff[dff['PerformanceScore'].isin(['Exceeds', 'Fully Meets'])].shape[0]
         return f"{high / dff.shape[0]:.1%}"
 
-    # --- VISUALIZATIONS (Applied theme_colors) ---
+    # --- VISUALIZATIONS ---
 
     @render_widget
     def plot_attrition_dept():
@@ -293,11 +332,16 @@ def server(input, output, session):
         
         fig = px.bar(
             counts, x="Count", y="Department", orientation='h',
-            # Apply Theme: Use Purple to Blue gradient
-            color="Count", color_continuous_scale=[theme_colors[0], theme_colors[1]],
-            title="Which Departments are losing the most people?"
+            color="Count", color_continuous_scale=[theme_colors[0], theme_colors[1]]
         )
-        fig.update_layout(showlegend=False, yaxis={'categoryorder':'total ascending'})
+        fig.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font_color="gray",
+            showlegend=False, 
+            yaxis={'categoryorder':'total ascending'},
+            margin=dict(l=0, r=0, t=10, b=0) 
+        )
         return fig
 
     @render_widget
@@ -312,11 +356,16 @@ def server(input, output, session):
         
         fig = px.bar(
             counts, x="Count", y="Reason", orientation='h',
-            # Apply Theme: Use Cyan/Teal gradient
-            color="Count", color_continuous_scale=[theme_colors[2], theme_colors[0]],
-            title="Why are people leaving?"
+            color="Count", color_continuous_scale=[theme_colors[2], theme_colors[0]]
         )
-        fig.update_layout(showlegend=False, yaxis={'categoryorder':'total ascending'})
+        fig.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font_color="gray",
+            showlegend=False, 
+            yaxis={'categoryorder':'total ascending'},
+            margin=dict(l=0, r=0, t=10, b=0)
+        )
         return fig
 
     @render_widget
@@ -325,15 +374,31 @@ def server(input, output, session):
         if dff.empty: return
         term_df = dff[dff['Termd'] == 1].copy()
         if term_df.empty: return
+        
         term_df['TenureDays'] = (term_df['DateofTermination'] - term_df['DateofHire']).dt.days
         
-        fig = px.histogram(
-            term_df, x="TenureDays", nbins=20,
-            title="Time until Termination (Days)",
-            # Apply Theme: Use Bright Blue
-            color_discrete_sequence=[theme_colors[1]]
+        # Create Bins (Years)
+        bins = [0, 365, 1095, 1825, 10000] # 0-1yr, 1-3yr, 3-5yr, 5+yr
+        labels = ['< 1 Year', '1-3 Years', '3-5 Years', '5+ Years']
+        term_df['TenureGroup'] = pd.cut(term_df['TenureDays'], bins=bins, labels=labels)
+        
+        tenure_counts = term_df['TenureGroup'].value_counts().reset_index()
+        tenure_counts.columns = ['Tenure Group', 'Count']
+        
+        fig = px.bar(
+            tenure_counts, x="Tenure Group", y="Count",
+            color_discrete_sequence=[theme_colors[1]], 
+            category_orders={"Tenure Group": ['< 1 Year', '1-3 Years', '3-5 Years', '5+ Years']}
         )
-        fig.update_layout(bargap=0.1, showlegend=False)
+        
+        fig.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font_color="gray",
+            bargap=0.2, 
+            showlegend=False,
+            margin=dict(l=0, r=0, t=10, b=0)
+        )
         return fig
 
     @render_widget
@@ -345,11 +410,17 @@ def server(input, output, session):
         
         fig = px.bar(
             df_grp, x="Count", y="RecruitmentSource", color="EmploymentStatus",
-            orientation='h', title="Hiring Source Effectiveness",
-            # Apply Theme: Use the full palette
+            orientation='h',
             color_discrete_sequence=theme_colors
         )
-        fig.update_layout(yaxis={'categoryorder':'total ascending'})
+        fig.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font_color="gray",
+            yaxis={'categoryorder':'total ascending'},
+            margin=dict(l=0, r=0, t=10, b=0),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+        )
         return fig
 
     @render_widget
@@ -362,27 +433,52 @@ def server(input, output, session):
         
         fig = px.pie(
             counts, values='Count', names='Score', hole=0.4,
-            title="Workforce Performance Distribution",
-            # Apply Theme
             color_discrete_sequence=theme_colors
+        )
+        fig.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font_color="gray",
+            margin=dict(l=0, r=0, t=20, b=0)
         )
         return fig
 
     @render_widget
     def plot_prod_sat_matrix():
+        # --- NEW LOGIC: Box Plot with Jitter (Centered) ---
         dff = filtered_df()
         if dff.empty: return
         
-        fig = px.scatter(
-            dff, x="EmpSatisfaction", y="EngagementSurvey", 
-            color="PerformanceScore", symbol="PerformanceScore",
-            hover_data=["Employee_Name", "Position"],
-            title="Productivity vs. Satisfaction Matrix",
-            # Apply Theme
+        # Order the Performance Scores logically
+        perf_order = ['PIP', 'Needs Improvement', 'Fully Meets', 'Exceeds']
+        
+        fig = px.box(
+            dff, 
+            x="PerformanceScore", 
+            y="EngagementSurvey", 
+            color="PerformanceScore",
+            points="all", 
+            hover_data=["Employee_Name", "ManagerName", "EmpSatisfaction"],
+            category_orders={"PerformanceScore": perf_order},
             color_discrete_sequence=theme_colors
         )
-        fig.add_hline(y=dff['EngagementSurvey'].mean(), line_dash="dash", line_color="gray")
-        fig.add_vline(x=dff['EmpSatisfaction'].mean(), line_dash="dash", line_color="gray")
+        
+        # --- VISUAL FIX: Center the dots and make them look cleaner ---
+        fig.update_traces(
+            jitter=0.5,              # Spread dots horizontally so they don't clump
+            pointpos=0,              # 0 = Center dots ON the box (instead of side)
+            marker=dict(size=5, opacity=0.6, line=dict(width=0.5, color='DarkSlateGrey')) # Better dot styling
+        )
+        
+        fig.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font_color="gray",
+            margin=dict(l=0, r=0, t=10, b=0),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+            xaxis_title=None, 
+            showlegend=False
+        )
         return fig
 
     @render_widget
@@ -395,9 +491,15 @@ def server(input, output, session):
         
         fig = px.bar(
             att_melted, x="PerformanceScore", y="Average Days", color="Metric", 
-            barmode="group", title="Do Absences Impact Performance?",
-            # Apply Theme: Use Purple and Cyan
+            barmode="group",
             color_discrete_sequence=[theme_colors[0], theme_colors[3]]
+        )
+        fig.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font_color="gray",
+            margin=dict(l=0, r=0, t=10, b=0),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
         return fig
 
@@ -419,9 +521,14 @@ def server(input, output, session):
         fig = px.bar(
             mgr_melted, y="ManagerName", x="Score", color="Metric", 
             barmode="group", orientation='h', height=600,
-            title="Manager Effectiveness",
-            # Apply Theme: Use Blue and Teal
             color_discrete_sequence=[theme_colors[1], theme_colors[2]]
+        )
+        fig.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font_color="gray",
+            margin=dict(l=0, r=0, t=10, b=0),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
         return fig
 
