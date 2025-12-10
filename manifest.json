@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "locale": "English_Philippines.1252",
+  "metadata": {
+    "appmode": "python-shiny",
+    "entrypoint": "main"
+  },
+  "python": {
+    "version": "3.11.9",
+    "package_manager": {
+      "name": "pip",
+      "version": "25.3",
+      "package_file": "requirements.txt"
+    }
+  },
+  "environment": {
+    "python": {
+      "requires": ">= 3.11.9"
+    }
+  },
+  "files": {
+    "requirements.txt": {
+      "checksum": "f64f23f8394ebdd89cd7ab657ce4c54f"
+    },
+    ".gitignore": {
+      "checksum": "b987f9564caecd7000a87d14c360f086"
+    },
+    "HRDataset_v14.csv": {
+      "checksum": "777f759cbd84171aaea3ca7578bbb10c"
+    },
+    "README.md": {
+      "checksum": "32b137ad567ba10da0694f597f526a53"
+    },
+    "assets/BSCS3_Ian.jpeg": {
+      "checksum": "ebbccfb86675e2f927db0168117301f5"
+    },
+    "assets/BSCS3_Khin.jpg": {
+      "checksum": "d674051c2be0ff52493a980fc4dcba76"
+    },
+    "assets/BSCS3_Rui.jpg": {
+      "checksum": "0b5e413fae661e814a752d9d822b5223"
+    },
+    "head.ipynb": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "main.py": {
+      "checksum": "52840b0c0d88f2e138ca48ae89c0ae7d"
+    },
+    "pyproject.toml": {
+      "checksum": "4b192a81d6184af207b6aa102ec8dc14"
+    }
+  }
+}
