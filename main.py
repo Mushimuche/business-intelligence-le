@@ -241,6 +241,21 @@ app_ui = ui.page_fluid(
         .bg-brand-teal { background-color: #198754 !important; color: white !important; }
         .bg-brand-cyan { background-color: #0DCAF0 !important; color: #191C24 !important; }
         .bg-brand-dark-cyan { background-color: #FFC107 !important; color: #191C24 !important; }
+
+        /* 5. NAV TAB STYLING (New Section) */
+        .nav-pills {
+            font-size: 1.15rem; 
+            font-weight: 700;   
+            border-bottom: 2px solid #ccc; 
+            margin-bottom: 20px; 
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .nav-pills .nav-item {
+            flex-grow: 1; 
+            text-align: center; 
+        }
         
         .bslib-value-box svg {
             fill: currentColor; 
