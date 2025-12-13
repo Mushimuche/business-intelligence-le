@@ -158,7 +158,7 @@ dashboard_page_content = ui.layout_sidebar(
             ),
             ui.br(),
             ui.layout_columns(
-                ui.card(ui.card_header("When do employees leave? (Tenure Groups)"), output_widget("plot_tenure"), full_screen=True),
+                ui.card(ui.card_header("When do employees leave?"), output_widget("plot_tenure"), full_screen=True),
                 ui.card(ui.card_header("Recruitment Source vs. Retention"), output_widget("plot_recruitment"), full_screen=True),
             ),
         ),
@@ -167,11 +167,13 @@ dashboard_page_content = ui.layout_sidebar(
             ui.br(),
             ui.layout_columns(
                 ui.card(ui.card_header("Performance Score Distribution"), output_widget("plot_perf_dist"), full_screen=True),
-                ui.card(ui.card_header("Are High Performers Engaged?"), output_widget("plot_prod_sat_matrix"), full_screen=True),
+                # UPDATED TITLE:
+                ui.card(ui.card_header("Engagement Survey by Department"), output_widget("plot_prod_sat_matrix"), full_screen=True),
             ),
             ui.br(),
             ui.layout_columns(
-                ui.card(ui.card_header("Impact of Absences & Lateness on Performance"), output_widget("plot_attendance_perf"), full_screen=True),
+                # UPDATED TITLE:
+                ui.card(ui.card_header("Absences Distribution by Department"), output_widget("plot_attendance_perf"), full_screen=True),
                 ui.card(ui.card_header("Manager Effectiveness"), output_widget("plot_manager_effect"), full_screen=True),
             ),
         ),
@@ -499,17 +501,14 @@ def server(input, output, session):
         dff = filtered_df()
         if dff.empty: return
         
-        perf_order = ['PIP', 'Needs Improvement', 'Fully Meets', 'Exceeds']
-        
-        fig = px.violin(
+        # NEW LOGIC: Boxplot of EngagementSurvey by Department
+        fig = px.box(
             dff, 
-            x="PerformanceScore", 
+            x="Department", 
             y="EngagementSurvey", 
-            color="PerformanceScore",
-            box=True,          
-            points="all",      
+            color="Department", # Color by Department for visual distinction
+            points="outliers", # Only show outliers as points
             hover_data=["Employee_Name", "ManagerName", "EmpSatisfaction"],
-            category_orders={"PerformanceScore": perf_order},
             color_discrete_sequence=theme_colors
         )
         
@@ -520,8 +519,11 @@ def server(input, output, session):
             margin=dict(l=0, r=0, t=10, b=0),
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
             xaxis_title=None, 
-            showlegend=False
+            yaxis_title="Engagement Survey Score", # Added Y-axis title
+            showlegend=False # Legend hidden as color is by x-axis variable
         )
+        # Rotate x-axis labels for better readability if Department names are long
+        fig.update_xaxes(tickangle=45) 
         return fig
 
     @render_widget
@@ -529,21 +531,29 @@ def server(input, output, session):
         dff = filtered_df()
         if dff.empty: return
         
-        att_df = dff.groupby('PerformanceScore')[['Absences', 'DaysLateLast30']].mean().reset_index()
-        att_melted = att_df.melt(id_vars='PerformanceScore', var_name='Metric', value_name='Average Days')
-        
-        fig = px.bar(
-            att_melted, x="PerformanceScore", y="Average Days", color="Metric", 
-            barmode="group",
-            color_discrete_sequence=[theme_colors[0], theme_colors[3]]
+        # NEW LOGIC: Boxplot of Absences by Department
+        fig = px.box(
+            dff, 
+            x="Department", 
+            y="Absences", 
+            color="Department", # Color by Department for visual distinction
+            points="outliers", 
+            hover_data=["Employee_Name", "ManagerName"],
+            color_discrete_sequence=theme_colors
         )
+
         fig.update_layout(
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
             font_color="gray",
             margin=dict(l=0, r=0, t=10, b=0),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+            xaxis_title=None, 
+            yaxis_title="Number of Absences", # Added Y-axis title
+            showlegend=False
         )
+        # Rotate x-axis labels for better readability
+        fig.update_xaxes(tickangle=45) 
         return fig
 
     @render_widget
@@ -556,22 +566,34 @@ def server(input, output, session):
         mgr_df['PerfScoreNum'] = mgr_df['PerformanceScore'].map(score_map)
         
         mgr_stats = mgr_df.groupby('ManagerName')[['PerfScoreNum', 'EmpSatisfaction']].mean().reset_index()
-        mgr_stats = mgr_stats.sort_values('PerfScoreNum', ascending=False)
         
+        # --- MODIFIED: SORT BY PERFORMANCE THEN SATISFACTION (Alternative 2) ---
+        mgr_stats = mgr_stats.sort_values(
+            # Sort first by PerformanceScore (primary) and then by EmpSatisfaction (tie-breaker)
+            ['PerfScoreNum', 'EmpSatisfaction'], 
+            # Use ascending=True for both, as Plotly's horizontal bar charts start at the bottom
+            ascending=[False, False] 
+        )
+
         mgr_melted = mgr_stats.melt(id_vars='ManagerName', var_name='Metric', value_name='Score')
         mgr_melted['Metric'] = mgr_melted['Metric'].replace({'PerfScoreNum': 'Avg Performance', 'EmpSatisfaction': 'Avg Satisfaction'})
+
+        # Get the new ordered list of managers
+        manager_order = mgr_stats['ManagerName'].tolist()
 
         fig = px.bar(
             mgr_melted, y="ManagerName", x="Score", color="Metric", 
             barmode="group", orientation='h', height=600,
-            color_discrete_sequence=[theme_colors[1], theme_colors[2]]
+            color_discrete_sequence=[theme_colors[1], theme_colors[2]],
+            # --- NEW: ENFORCE CUSTOM ORDERING ---
+            category_orders={"ManagerName": manager_order} 
         )
         fig.update_layout(
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
             font_color="gray",
             margin=dict(l=0, r=0, t=10, b=0),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0)
         )
         return fig
 
