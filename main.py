@@ -183,10 +183,10 @@ dashboard_page_content = ui.layout_sidebar(
 # 2. DEFINE THE UI
 app_ui = ui.page_fluid(
     # --- LOAD GOOGLE FONTS ---
-    ui.head_content(
+        ui.head_content(
         ui.tags.link(
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap", 
-        rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap", 
+            rel="stylesheet"
         )
     ),
 
@@ -194,11 +194,11 @@ app_ui = ui.page_fluid(
     ui.tags.style("""
         /* 1. TYPOGRAPHY SETTINGS */
         :root {
-            --bs-body-font-family: 'Inter', sans-serif;
+        --bs-body-font-family: 'Open Sans', sans-serif;
         }
         h1, h2, h3, h4, h5, h6, .card-header, .value-box-title {
-            font-family: 'Inter', sans-serif !important;
-            font-weight: 600;
+            font-family: 'Open Sans', sans-serif !important;
+            font-weight: 700;
         }
 
         /* 2. LAYOUT & SPACING */
