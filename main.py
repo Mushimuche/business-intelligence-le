@@ -194,11 +194,10 @@ app_ui = ui.page_fluid(
     ui.tags.style("""
         /* 1. TYPOGRAPHY SETTINGS */
         :root {
-            --bs-body-font-family: 'Lato', sans-serif;
+            --bs-body-font-family: 'Inter', sans-serif;
         }
-        
         h1, h2, h3, h4, h5, h6, .card-header, .value-box-title {
-            font-family: 'Montserrat', sans-serif !important;
+            font-family: 'Inter', sans-serif !important;
             font-weight: 600;
         }
 
