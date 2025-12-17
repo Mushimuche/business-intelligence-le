@@ -141,7 +141,7 @@ dashboard_page_content = ui.layout_sidebar(
     ),
     
     ui.layout_columns(
-        ui.value_box("Total Headcount", ui.output_text("kpi_headcount"), showcase=fa.icon_svg("users"), theme="brand-purple"),
+        ui.value_box("Active Headcount", ui.output_text("kpi_headcount"), showcase=fa.icon_svg("users"), theme="brand-purple"),
         ui.value_box("Attrition Rate", ui.output_text("kpi_attrition"), showcase=fa.icon_svg("user-minus"), theme="brand-blue"),
         ui.value_box("Avg Engagement", ui.output_text("kpi_engagement"), showcase=fa.icon_svg("chart-line"), theme="brand-teal"),
         ui.value_box("Avg Satisfaction", ui.output_text("kpi_satisfaction"), showcase=fa.icon_svg("face-smile", style="solid", fill="white", height="1em"), theme="brand-cyan"),
@@ -185,8 +185,8 @@ app_ui = ui.page_fluid(
     # --- LOAD GOOGLE FONTS ---
     ui.head_content(
         ui.tags.link(
-            href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Montserrat:wght@500;600;700&display=swap", 
-            rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap", 
+        rel="stylesheet"
         )
     ),
 
